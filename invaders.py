@@ -19,11 +19,29 @@ class Game():
 
     def __init__(self, player, alien_group, player_bullet_group, alien_bullet_group):
         """Initialize the game"""
-        pass
+        #Set game values
+        self.round_number = 1
+        self.score = 0
+
+        self.player = player
+        self.alien_group = alien_group
+        self.player_bullet_group = player_bullet_group
+        self.alien_bullet_group = alien_bullet_group
+
+        #Set sounds and music
+        self.new_round_sound = pygame.mixer.Sound("new_round.wav")
+        self.breach_sound = pygame.mixer.Sound("breach.wav")
+        self.alien_hit_sound = pygame.mixer.Sound("alien_hit.wav")
+        self.player_hit_sound = pygame.mixer.Sound("player_hit.wav")
+
+        #Set font
+        self.font = pygame.font.Font("Facon.ttf", 32)
 
     def update(self):
         """Update the game"""
-        pass
+        self.shift_aliens()
+        self.check_collisions()
+        self.check_round_completion()
 
     def draw(self):
         """Draw the HUD and other information to display"""
@@ -33,7 +51,6 @@ class Game():
         """Shift a wave of aliens down the screen and reverse direction"""
         pass
 
-
     def check_collisions(self):
         """Check for collisions"""
         pass
@@ -42,23 +59,75 @@ class Game():
         """Check to see if a player has completed a single round"""
         pass
 
-
     def start_new_round(self):
         """Start a new round"""
-        pass
+        # Create a grid of Aliens 11 columns and 5 rows.
+        for col in range(11):
+            for row in range(5):
+                Alien(64+ col * 64, 64 + row * 64, self.round_number, self.alien_bullet_group)
+
+        # Pause the game and prompt user to start
+        self.new_round_sound.play()
+        self.pause_game(f"Space Invaders Round {self.round_number}", "Press Enter to begin")
 
     def check_game_status(self, main_text, sub_text):
         """Check to see the status of the game and how the player died"""
         pass
 
-
     def pause_game(self, main_text, sub_text):
         """Pauses the game"""
-        pass
+        global running
+
+        # Set Colors
+        WHITE = (255, 255, 255)
+        BLACK = (0, 0, 0)
+
+        # Create main pause text
+        main_text = self.font.render(main_text, True, WHITE)
+        main_rect = main_text.get_rect()
+        main_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
+
+        #Create sub pause text
+        sub_text = self.font.render(sub_text, True, WHITE)
+        sub_rect = sub_text.get_rect()
+        sub_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 64)
+
+        #Blit the pause text
+        display_surface.fill(BLACK)
+        display_surface.blit(main_text, main_rect)
+        display_surface.blit(sub_text, sub_rect)
+        pygame.display.update()
+
+        #Pause the game until the user hits enter
+        is_paused = True
+        while is_paused:
+            for event in pygame.event.get():
+                # The user wants to play again
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        is_paused = False
+                # The user wants to quit
+                if event.type == pygame.QUIT:
+                    is_paused = False
+                    running = False
+
 
     def reset_game(self):
         """Reset the game"""
-        pass
+        self.pause_game(f"Final Score: {self.score}","Press 'Enter' to play again")
+
+        # Reset game values
+        self.score = 0
+        self.round_number = 1
+        self.player.lives = 5
+
+        # Empty groups
+        self.alien_group.empty()
+        self.alien_bullet_group.empty()
+        self.player_bullet_group.empty()
+
+        # Start a new game
+        self.start_new_round()
 
 
 class Player(pygame.sprite.Sprite):
@@ -67,7 +136,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, bullet_group):
         """Initialize the player"""
         super().__init__()
-        self.image = pygame.image.load("player_bullet.png")
+        self.image = pygame.image.load("player_ship.png")
         self.rect = self.image.get_rect()
         self.rect.centerx = WINDOW_WIDTH // 2
         self.rect.bottom = WINDOW_HEIGHT
